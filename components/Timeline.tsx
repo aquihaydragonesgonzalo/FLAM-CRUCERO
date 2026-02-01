@@ -18,7 +18,7 @@ const Timeline: React.FC<Props> = ({ itinerary, onToggleComplete, onLocate, user
     
     return (
         <div className="pb-24 px-4 pt-4 max-w-lg mx-auto h-full overflow-y-auto">
-            <h2 className="text-2xl font-bold text-fjord-500 mb-2">Itinerario Lujo Matutino</h2>
+            <h2 className="text-2xl font-bold text-fjord-500 mb-2">ITINERARIO FLAM 14 de mayo de 2026</h2>
             <p className="text-xs text-slate-500 mb-6 flex items-center">
                 <Info size={12} className="mr-1"/> Toca una tarjeta para ver detalles
             </p>
@@ -178,7 +178,7 @@ const Timeline: React.FC<Props> = ({ itinerary, onToggleComplete, onLocate, user
                 {/* Copyright Footer */}
                 <div className="text-center py-8 text-slate-400 text-xs mt-4">
                     <p className="font-medium">Flåm Guide 2026</p>
-                    <p>Actualizado el {UPDATE_DATE}</p>
+                    <p>Actualizado el 01 de febrero de 2026</p>
                     <p className="mt-1">© 2025 - 2026 Gonzalo Arenas de la Hoz</p>
                 </div>
             </div>
