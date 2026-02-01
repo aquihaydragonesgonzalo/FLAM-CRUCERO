@@ -1,0 +1,7 @@
+{
+  "name": "FLAM CRUCERO",
+  "description": "Guía turística interactiva para Flåm 2026",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
