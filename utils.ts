@@ -33,3 +33,19 @@ export const calculateTimeGap = (endPrevious: string, startNext: string) => {
     if (diff <= 0) return null;
     return diff < 60 ? `${diff} min` : `${Math.floor(diff/60)}h ${diff%60}m`;
 };
+
+export const parseGPX = (gpxData: string): Coords[] => {
+    const parser = new DOMParser();
+    const xmlDoc = parser.parseFromString(gpxData, "text/xml");
+    const trkpts = xmlDoc.getElementsByTagName("trkpt");
+    const coords: Coords[] = [];
+
+    for (let i = 0; i < trkpts.length; i++) {
+        const lat = parseFloat(trkpts[i].getAttribute("lat") || "0");
+        const lon = parseFloat(trkpts[i].getAttribute("lon") || "0");
+        if (lat && lon) {
+            coords.push({ lat, lng: lon });
+        }
+    }
+    return coords;
+};
