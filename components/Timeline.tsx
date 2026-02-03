@@ -1,18 +1,18 @@
 import React from 'react';
-import { ChevronDown, Info, AlertTriangle, Ship, MapPin, Headphones, Ticket } from 'lucide-react';
+import { ChevronDown, Info, AlertTriangle, Ship, MapPin, Headphones, Ticket, Navigation } from 'lucide-react';
 import { Activity, Coords } from '../types';
-import { calculateDuration, calculateTimeGap } from '../utils';
-import { UPDATE_DATE } from '../constants';
+import { calculateDuration, calculateTimeGap, calculateDistance, calculateBearing, formatDistance } from '../utils';
 
 interface Props {
     itinerary: Activity[];
     onToggleComplete: (id: string) => void;
     onLocate: (c1: Coords, c2?: Coords) => void;
     userLocation: Coords | null;
+    userHeading?: number;
     onSelectActivity: (activity: Activity, autoOpenAudio?: boolean) => void;
 }
 
-const Timeline: React.FC<Props> = ({ itinerary, onToggleComplete, onLocate, userLocation, onSelectActivity }) => {
+const Timeline: React.FC<Props> = ({ itinerary, onToggleComplete, onLocate, userLocation, userHeading = 0, onSelectActivity }) => {
     const now = new Date();
     const currentTimeMinutes = now.getHours() * 60 + now.getMinutes();
     
@@ -43,6 +43,18 @@ const Timeline: React.FC<Props> = ({ itinerary, onToggleComplete, onLocate, user
                     const duration = calculateDuration(act.startTime, act.endTime);
                     const hasAudio = ['4', '6', '7', '8'].includes(act.id);
                     
+                    // Distance and Direction Calculation
+                    let dist = 0;
+                    let bearing = 0;
+                    let direction = 0;
+                    
+                    if (userLocation) {
+                        dist = calculateDistance(userLocation, act.coords);
+                        bearing = calculateBearing(userLocation, act.coords);
+                        // Rotate arrow: Bearing to target - Device Heading
+                        direction = (bearing - userHeading + 360) % 360;
+                    }
+
                     // Calculate Gap to next activity
                     let gapElement = null;
                     if (index < itinerary.length - 1) {
@@ -151,6 +163,19 @@ const Timeline: React.FC<Props> = ({ itinerary, onToggleComplete, onLocate, user
                                         </div>
                                         
                                         <div className="flex items-center space-x-2">
+                                            {/* Distance & Direction Indicator */}
+                                            {userLocation && dist > 0 && (
+                                                <div className={`flex items-center font-bold text-xs px-2 py-1 rounded-lg ${isDeparture ? 'bg-slate-700 text-emerald-400' : 'bg-slate-50 text-emerald-600 border border-slate-100'}`}>
+                                                    <Navigation 
+                                                        size={12} 
+                                                        className="mr-1 transition-transform duration-500" 
+                                                        style={{ transform: `rotate(${direction}deg)` }} 
+                                                        fill="currentColor" 
+                                                    />
+                                                    {formatDistance(dist)}
+                                                </div>
+                                            )}
+
                                             {hasAudio && (
                                                 <button 
                                                     onClick={(e) => { e.stopPropagation(); onSelectActivity(act, true); }}
@@ -160,12 +185,6 @@ const Timeline: React.FC<Props> = ({ itinerary, onToggleComplete, onLocate, user
                                                     Audioguía
                                                 </button>
                                             )}
-                                            <button 
-                                                onClick={(e) => { e.stopPropagation(); onLocate(act.coords, act.endCoords); }}
-                                                className="p-1.5 hover:bg-slate-100 rounded-full text-fjord-600"
-                                            >
-                                                <MapPin size={16} className={isDeparture ? 'text-blue-300' : ''} />
-                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -175,10 +194,10 @@ const Timeline: React.FC<Props> = ({ itinerary, onToggleComplete, onLocate, user
                     );
                 })}
                 
-                {/* Copyright Footer */}
+                {/* Footer */}
                 <div className="text-center py-8 text-slate-400 text-xs mt-4">
                     <p className="font-medium">Flåm Guide 2026</p>
-                    <p>Actualizado el 01 de febrero de 2026</p>
+                    <p>Actualizado el 04 de febrero de 2026</p>
                     <p className="mt-1">© 2025 - 2026 Gonzalo Arenas de la Hoz</p>
                 </div>
             </div>

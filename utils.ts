@@ -11,6 +11,21 @@ export const calculateDistance = (c1: Coords, c2: Coords) => {
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 };
 
+export const calculateBearing = (start: Coords, end: Coords): number => {
+    if (!start || !end) return 0;
+    const startLat = start.lat * Math.PI / 180;
+    const startLng = start.lng * Math.PI / 180;
+    const endLat = end.lat * Math.PI / 180;
+    const endLng = end.lng * Math.PI / 180;
+
+    const y = Math.sin(endLng - startLng) * Math.cos(endLat);
+    const x = Math.cos(startLat) * Math.sin(endLat) -
+              Math.sin(startLat) * Math.cos(endLat) * Math.cos(endLng - startLng);
+    const θ = Math.atan2(y, x);
+    const brng = (θ * 180 / Math.PI + 360) % 360;
+    return brng;
+};
+
 export const formatDistance = (meters: number) => {
     if (meters < 1000) return `${Math.round(meters)} m`;
     return `${(meters / 1000).toFixed(1)} km`;

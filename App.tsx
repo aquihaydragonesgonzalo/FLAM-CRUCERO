@@ -12,6 +12,7 @@ const App: React.FC = () => {
     const [itinerary, setItinerary] = useState<Activity[]>(INITIAL_ITINERARY);
     const [activeTab, setActiveTab] = useState<'timeline' | 'map' | 'budget' | 'guide'>('timeline');
     const [userLocation, setUserLocation] = useState<Coords | null>(null);
+    const [userHeading, setUserHeading] = useState<number>(0);
     const [mapFocus, setMapFocus] = useState<Coords | null>(null);
     
     const [selectedActivityConfig, setSelectedActivityConfig] = useState<{ activity: Activity, autoOpenAudio: boolean } | null>(null);
@@ -29,6 +30,27 @@ const App: React.FC = () => {
             );
             return () => navigator.geolocation.clearWatch(id);
         }
+    }, []);
+
+    // Device Orientation (Compass)
+    useEffect(() => {
+        const handleOrientation = (event: DeviceOrientationEvent) => {
+            // iOS uses webkitCompassHeading for true north, Android/Standard uses alpha
+            let heading = 0;
+            if ((event as any).webkitCompassHeading) {
+                heading = (event as any).webkitCompassHeading;
+            } else if (event.alpha) {
+                heading = 360 - event.alpha; // Android alpha rotates opposite to compass bearing usually
+            }
+            setUserHeading(heading);
+        };
+
+        if (window.DeviceOrientationEvent) {
+            window.addEventListener('deviceorientation', handleOrientation);
+        }
+        return () => {
+            window.removeEventListener('deviceorientation', handleOrientation);
+        };
     }, []);
 
     // Smart Countdown
@@ -99,7 +121,16 @@ const App: React.FC = () => {
             </header>
 
             <main className="flex-1 overflow-hidden relative">
-                {activeTab === 'timeline' && <Timeline itinerary={itinerary} onToggleComplete={handleToggleComplete} onLocate={handleLocate} userLocation={userLocation} onSelectActivity={handleSelectActivity} />}
+                {activeTab === 'timeline' && (
+                    <Timeline 
+                        itinerary={itinerary} 
+                        onToggleComplete={handleToggleComplete} 
+                        onLocate={handleLocate} 
+                        userLocation={userLocation} 
+                        userHeading={userHeading}
+                        onSelectActivity={handleSelectActivity} 
+                    />
+                )}
                 {activeTab === 'map' && <MapComponent activities={itinerary} userLocation={userLocation} focusedLocation={mapFocus} />}
                 {activeTab === 'budget' && <Budget itinerary={itinerary} />}
                 {activeTab === 'guide' && <Guide userLocation={userLocation} />}
