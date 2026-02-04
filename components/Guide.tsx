@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { AlertTriangle, Anchor, Camera, Sun, CloudRain, CloudSnow, Clock, Droplets, CloudSun, Volume2, ArrowRight, Sunrise, Sunset } from 'lucide-react';
+import { AlertTriangle, Anchor, Camera, Sun, CloudRain, CloudSnow, Clock, Droplets, CloudSun, Volume2, ArrowRight, Sunrise, Sunset, FileDown, Loader2 } from 'lucide-react';
+import { jsPDF } from "jspdf";
 import { Coords, HourlyForecast, DailyForecast, AstronomyData, WeatherData } from '../types';
-import { PRONUNCIATIONS, UPDATE_DATE } from '../constants';
+import { PRONUNCIATIONS, UPDATE_DATE, INITIAL_ITINERARY } from '../constants';
 
 interface Props {
     userLocation: Coords | null;
@@ -13,6 +14,7 @@ const Guide: React.FC<Props> = ({ userLocation }) => {
     const [forecast, setForecast] = useState<DailyForecast[]>([]);
     const [hourlyForecast, setHourlyForecast] = useState<HourlyForecast[]>([]);
     const [astronomy, setAstronomy] = useState<AstronomyData | null>(null);
+    const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
     // Fetch Weather & Solar Data
     useEffect(() => {
@@ -100,13 +102,125 @@ const Guide: React.FC<Props> = ({ userLocation }) => {
     };
 
     const openTranslator = () => {
-        // Google Translate Camera Mode
         window.open('https://translate.google.com/?sl=no&tl=es&op=images', '_blank');
     };
     
     const openMSCApp = () => {
-        // Try to open Play Store page which will offer "Open" if installed
         window.open('https://play.google.com/store/apps/details?id=com.msccruises.mscforme', '_blank');
+    };
+
+    const generatePDF = () => {
+        setIsGeneratingPdf(true);
+        try {
+            const doc = new jsPDF();
+            const pageWidth = doc.internal.pageSize.getWidth();
+            let y = 20;
+
+            // Header
+            doc.setFontSize(22);
+            doc.setTextColor(42, 91, 135); // Fjord Color
+            doc.text("Guía de Viaje: Flåm 2026", pageWidth / 2, y, { align: "center" });
+            
+            y += 10;
+            doc.setFontSize(10);
+            doc.setTextColor(100);
+            doc.text(`Generado el: ${new Date().toLocaleDateString()}`, pageWidth / 2, y, { align: "center" });
+            
+            y += 15;
+            doc.setLineWidth(0.5);
+            doc.setDrawColor(200);
+            doc.line(10, y, pageWidth - 10, y);
+            y += 10;
+
+            // Content Loop
+            INITIAL_ITINERARY.forEach((item, index) => {
+                // Page Break Check
+                if (y > 250) {
+                    doc.addPage();
+                    y = 20;
+                }
+
+                const isDeparture = item.notes === 'DEPARTURE';
+                const isCritical = item.notes === 'CRITICAL';
+
+                // Time Box
+                doc.setFontSize(10);
+                doc.setFont(undefined, 'bold');
+                doc.setTextColor(255, 255, 255);
+                
+                let timeColor = [42, 91, 135]; // Default Blue
+                if (isCritical) timeColor = [220, 38, 38]; // Red
+                if (isDeparture) timeColor = [30, 41, 59]; // Dark Slate
+                
+                doc.setFillColor(timeColor[0], timeColor[1], timeColor[2]);
+                doc.roundedRect(10, y - 4, 35, 6, 1, 1, 'F');
+                doc.text(`${item.startTime} - ${item.endTime}`, 12, y);
+
+                // Location Name
+                doc.setTextColor(100);
+                doc.setFont(undefined, 'normal');
+                doc.text(`@ ${item.locationName}`, 50, y);
+
+                y += 8;
+
+                // Title
+                doc.setFontSize(14);
+                doc.setFont(undefined, 'bold');
+                doc.setTextColor(0);
+                doc.text(item.title, 10, y);
+                y += 6;
+
+                // Description
+                doc.setFontSize(11);
+                doc.setFont(undefined, 'normal');
+                doc.setTextColor(60);
+                const descLines = doc.splitTextToSize(item.fullDescription, pageWidth - 20);
+                doc.text(descLines, 10, y);
+                y += (descLines.length * 5) + 3;
+
+                // Tips
+                if (item.tips) {
+                    if (y > 260) { doc.addPage(); y = 20; }
+                    doc.setFontSize(10);
+                    doc.setTextColor(194, 65, 12); // Orange Dark
+                    doc.setFont(undefined, 'italic');
+                    const tipLines = doc.splitTextToSize(`Tip: ${item.tips}`, pageWidth - 20);
+                    doc.text(tipLines, 10, y);
+                    y += (tipLines.length * 5) + 2;
+                }
+
+                // Price
+                if (item.priceEUR > 0) {
+                    doc.setFontSize(10);
+                    doc.setTextColor(21, 128, 61); // Green
+                    doc.setFont(undefined, 'bold');
+                    doc.text(`Coste: ${item.priceNOK} NOK (~${item.priceEUR}€)`, 10, y);
+                    y += 5;
+                }
+
+                y += 8; // Spacing between items
+                
+                // Separator line (light)
+                doc.setDrawColor(240);
+                doc.line(10, y - 4, pageWidth - 10, y - 4);
+            });
+
+            // Footer
+            const totalPages = doc.internal.pages.length - 1;
+            for (let i = 1; i <= totalPages; i++) {
+                doc.setPage(i);
+                doc.setFontSize(8);
+                doc.setTextColor(150);
+                doc.text(`Página ${i} de ${totalPages} - Flåm Guide 2026`, pageWidth / 2, 290, { align: "center" });
+            }
+
+            doc.save("Itinerario_Flam_2026.pdf");
+        } catch (error) {
+            console.error("Error generating PDF", error);
+            alert("Hubo un error al generar el PDF.");
+        } finally {
+            setIsGeneratingPdf(false);
+        }
     };
 
     // Solar Chart Helper
@@ -205,27 +319,35 @@ const Guide: React.FC<Props> = ({ userLocation }) => {
             <div className="grid grid-cols-2 gap-3 mb-6">
                 <button 
                     onClick={handleSOS}
-                    className="bg-red-600 text-white p-4 rounded-xl shadow-lg flex flex-col items-center justify-center active:scale-95 transition-transform animate-pulse-slow"
+                    className="bg-red-600 text-white p-4 rounded-xl shadow-lg flex flex-col items-center justify-center active:scale-95 transition-transform animate-pulse-slow col-span-2 sm:col-span-1"
                 >
                     <AlertTriangle size={32} className="mb-2" />
                     <span className="font-bold text-sm">SOS EMERGENCIA</span>
                     <span className="text-[10px] opacity-80 mt-1">Enviar Ubicación</span>
                 </button>
                 
-                <div className="flex flex-col gap-2">
-                        <button 
+                <div className="grid grid-cols-2 gap-2 col-span-2 sm:col-span-1">
+                    <button 
                         onClick={openMSCApp}
-                        className="flex-1 bg-blue-900 text-white p-2 rounded-xl shadow flex items-center justify-center active:scale-95"
+                        className="bg-blue-900 text-white p-2 rounded-xl shadow flex flex-col items-center justify-center active:scale-95 h-full"
                     >
-                        <Anchor size={20} className="mr-2" />
-                        <span className="text-xs font-bold">App MSC</span>
+                        <Anchor size={20} className="mb-1" />
+                        <span className="text-[10px] font-bold">App MSC</span>
                     </button>
                     <button 
                         onClick={openTranslator}
-                        className="flex-1 bg-indigo-600 text-white p-2 rounded-xl shadow flex items-center justify-center active:scale-95"
+                        className="bg-indigo-600 text-white p-2 rounded-xl shadow flex flex-col items-center justify-center active:scale-95 h-full"
                     >
-                        <Camera size={20} className="mr-2" />
-                        <span className="text-xs font-bold">Traductor Visual</span>
+                        <Camera size={20} className="mb-1" />
+                        <span className="text-[10px] font-bold">Traductor</span>
+                    </button>
+                    <button 
+                        onClick={generatePDF}
+                        disabled={isGeneratingPdf}
+                        className="col-span-2 bg-emerald-600 text-white p-2 rounded-xl shadow flex items-center justify-center active:scale-95 h-10 mt-1"
+                    >
+                        {isGeneratingPdf ? <Loader2 size={18} className="animate-spin mr-2" /> : <FileDown size={18} className="mr-2" />}
+                        <span className="text-xs font-bold">{isGeneratingPdf ? 'Generando...' : 'Descargar Itinerario PDF'}</span>
                     </button>
                 </div>
             </div>
