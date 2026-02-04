@@ -145,7 +145,7 @@ const Guide: React.FC<Props> = ({ userLocation }) => {
 
                 // Time Box
                 doc.setFontSize(10);
-                doc.setFont(undefined, 'bold');
+                doc.setFont("helvetica", 'bold');
                 doc.setTextColor(255, 255, 255);
                 
                 let timeColor = [42, 91, 135]; // Default Blue
@@ -158,21 +158,21 @@ const Guide: React.FC<Props> = ({ userLocation }) => {
 
                 // Location Name
                 doc.setTextColor(100);
-                doc.setFont(undefined, 'normal');
+                doc.setFont("helvetica", 'normal');
                 doc.text(`@ ${item.locationName}`, 50, y);
 
                 y += 8;
 
                 // Title
                 doc.setFontSize(14);
-                doc.setFont(undefined, 'bold');
+                doc.setFont("helvetica", 'bold');
                 doc.setTextColor(0);
                 doc.text(item.title, 10, y);
                 y += 6;
 
                 // Description
                 doc.setFontSize(11);
-                doc.setFont(undefined, 'normal');
+                doc.setFont("helvetica", 'normal');
                 doc.setTextColor(60);
                 const descLines = doc.splitTextToSize(item.fullDescription, pageWidth - 20);
                 doc.text(descLines, 10, y);
@@ -183,7 +183,7 @@ const Guide: React.FC<Props> = ({ userLocation }) => {
                     if (y > 260) { doc.addPage(); y = 20; }
                     doc.setFontSize(10);
                     doc.setTextColor(194, 65, 12); // Orange Dark
-                    doc.setFont(undefined, 'italic');
+                    doc.setFont("helvetica", 'italic');
                     const tipLines = doc.splitTextToSize(`Tip: ${item.tips}`, pageWidth - 20);
                     doc.text(tipLines, 10, y);
                     y += (tipLines.length * 5) + 2;
@@ -193,7 +193,7 @@ const Guide: React.FC<Props> = ({ userLocation }) => {
                 if (item.priceEUR > 0) {
                     doc.setFontSize(10);
                     doc.setTextColor(21, 128, 61); // Green
-                    doc.setFont(undefined, 'bold');
+                    doc.setFont("helvetica", 'bold');
                     doc.text(`Coste: ${item.priceNOK} NOK (~${item.priceEUR}€)`, 10, y);
                     y += 5;
                 }
