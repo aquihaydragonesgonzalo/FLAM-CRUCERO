@@ -26,6 +26,15 @@ export interface Activity {
     ticketUrl?: string;
 }
 
+export interface CustomPOI {
+    id: string;
+    lat: number;
+    lng: number;
+    title: string;
+    description: string;
+    timestamp: number;
+}
+
 export interface AudioTrack {
     id: number;
     title: string;
