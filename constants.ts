@@ -151,7 +151,7 @@ export const INITIAL_ITINERARY: Activity[] = [
         fullDescription: 'Considerado uno de los viajes en tren más bonitos del mundo. Subirás desde el nivel del mar hasta 867 metros. Verás la cascada Kjosfossen (donde el tren para fotos) y valles profundos.',
         tips: 'Esta es la pregunta del millón. Las vistas son espectaculares en ambos lados, pero hay una ligera ventaja dependiendo de la dirección:\n\nDe Flåm a Myrdal (subida): Siéntate en el lado derecho del tren (mirando hacia la dirección de la marcha). Verás mejor el valle y las cascadas principales durante la mayor parte del ascenso.\n\nDe Myrdal a Flåm (bajada): Siéntate en el lado izquierdo.',
         keyDetails: 'Ida y vuelta (~2 horas).',
-        priceNOK: 800, priceEUR: 70, type: 'transport', completed: false, notes: 'Parada en cascada Kjosfossen',
+        priceNOK: 810, priceEUR: 70, type: 'transport', completed: false, notes: 'Parada en cascada Kjosfossen',
         ticketUrl: 'https://www.norwaysbest.com/es/actividades/el-tren-de-flam',
         instagramUrl: 'https://www.instagram.com/explore/tags/flamsbana/'
     },
@@ -174,7 +174,7 @@ export const INITIAL_ITINERARY: Activity[] = [
         fullDescription: 'Navegarás por el Nærøyfjord (Patrimonio UNESCO). Es la parte más estrecha y espectacular del fiordo, con cascadas y granjas aisladas en las laderas.',
         tips: 'Logística: Toma la salida del barco eléctrico a las 12:00. Navegas Flåm → Gudvangen, y tomas el bus de vuelta (shuttle incluido en el ticket) a Flåm.',
         keyDetails: 'Duración total 2.5 horas.',
-        priceNOK: 950, priceEUR: 85, type: 'sightseeing', completed: false,
+        priceNOK: 835, priceEUR: 85, type: 'sightseeing', completed: false,
         ticketUrl: 'https://www.norwaysbest.com/es/flam/actividades/crucero-por-el-fiordo-naeroyfjord',
         instagramUrl: 'https://www.instagram.com/explore/tags/nærøyfjord/'
     },
@@ -186,7 +186,7 @@ export const INITIAL_ITINERARY: Activity[] = [
         fullDescription: 'Una plataforma de acero y madera que sobresale 30 metros de la montaña y cuelga a 650 metros sobre el fiordo con un panel frontal de cristal único.',
         tips: 'Toma el bus a las 15:00. Volverás con las espectaculares luces del atardecer primaveral sobre el fiordo.',
         keyDetails: 'Tour en bus ida y vuelta.',
-        priceNOK: 450, priceEUR: 40, type: 'sightseeing', completed: false,
+        priceNOK: 440, priceEUR: 40, type: 'sightseeing', completed: false,
         ticketUrl: 'https://www.norwaysbest.com/es/flam/actividades/mirador-stegastein',
         instagramUrl: 'https://www.instagram.com/explore/tags/stegastein/'
     },
