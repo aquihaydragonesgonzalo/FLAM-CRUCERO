@@ -1,6 +1,6 @@
 import React from 'react';
-import { ChevronDown, Info, AlertTriangle, Ship, MapPin, Headphones, Ticket, Navigation, Footprints, Clock } from 'lucide-react';
-import { Activity, Coords } from '../types';
+import { ChevronDown, Info, AlertTriangle, Ship, MapPin, Headphones, Ticket, Navigation, Footprints, Clock, Sun, CloudRain, CloudSnow, Cloud } from 'lucide-react';
+import { Activity, Coords, HourlyForecast } from '../types';
 import { calculateDuration, calculateTimeGap, calculateDistance, calculateBearing, formatDistance } from '../utils';
 
 interface Props {
@@ -10,12 +10,20 @@ interface Props {
     userLocation: Coords | null;
     userHeading?: number;
     onSelectActivity: (activity: Activity, autoOpenAudio?: boolean) => void;
+    hourlyWeather?: HourlyForecast[];
 }
 
-const Timeline: React.FC<Props> = ({ itinerary, onToggleComplete, onLocate, userLocation, userHeading = 0, onSelectActivity }) => {
+const Timeline: React.FC<Props> = ({ itinerary, onToggleComplete, onLocate, userLocation, userHeading = 0, onSelectActivity, hourlyWeather = [] }) => {
     const now = new Date();
     const currentTimeMinutes = now.getHours() * 60 + now.getMinutes();
     
+    const getWeatherIcon = (code: number) => {
+        if (code <= 3) return <Sun size={14} className="text-yellow-500" />;
+        if (code <= 48) return <Cloud size={14} className="text-slate-400" />; // Fog/Cloudy
+        if (code <= 69) return <CloudRain size={14} className="text-blue-400" />;
+        return <CloudSnow size={14} className="text-slate-400" />;
+    };
+
     return (
         <div className="pb-24 px-4 pt-4 max-w-lg mx-auto h-full overflow-y-auto">
             <h2 className="text-2xl font-bold text-fjord-500 mb-2">ITINERARIO FLAM 14 de mayo de 2026</h2>
@@ -42,6 +50,10 @@ const Timeline: React.FC<Props> = ({ itinerary, onToggleComplete, onLocate, user
                     const isDeparture = act.notes === 'DEPARTURE';
                     const duration = calculateDuration(act.startTime, act.endTime);
                     const hasAudio = ['4', '6', '7', '8'].includes(act.id);
+                    
+                    // Weather for this slot
+                    const startHourStr = act.startTime.split(':')[0]; // "08"
+                    const weather = hourlyWeather?.find(w => w.time.split(':')[0] === startHourStr);
                     
                     // Distance and Direction Calculation
                     let dist = 0;
@@ -155,8 +167,16 @@ const Timeline: React.FC<Props> = ({ itinerary, onToggleComplete, onLocate, user
                                             </h3>
                                         </div>
                                         <div className="flex gap-1.5 pl-2 items-start">
+                                            {/* Weather Icon (New) */}
+                                            {weather && !isDeparture && (
+                                                <div className="flex flex-col items-center bg-slate-50 border border-slate-100 p-1 rounded-md">
+                                                    {getWeatherIcon(weather.code)}
+                                                    <span className="text-[9px] font-bold text-slate-600 mt-0.5">{weather.temp}°</span>
+                                                </div>
+                                            )}
+
                                             {act.webcamUrl && (
-                                                <span className="text-[10px] font-bold bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded border border-blue-200 flex items-center">
+                                                <span className="text-[10px] font-bold bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded border border-blue-200 flex items-center h-[26px]">
                                                     CAM
                                                 </span>
                                             )}

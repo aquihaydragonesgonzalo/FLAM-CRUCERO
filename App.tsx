@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { CalendarClock, Map as MapIcon, Wallet, BookOpen, Anchor } from 'lucide-react';
 import { INITIAL_ITINERARY, SHIP_DEPARTURE_TIME, ONBOARD_TIME, ARRIVAL_TIME } from './constants';
-import { Activity, Coords } from './types';
+import { Activity, Coords, HourlyForecast } from './types';
 import Timeline from './components/Timeline';
 import Budget from './components/Budget';
 import Guide from './components/Guide';
@@ -14,6 +14,7 @@ const App: React.FC = () => {
     const [userLocation, setUserLocation] = useState<Coords | null>(null);
     const [userHeading, setUserHeading] = useState<number>(0);
     const [mapFocus, setMapFocus] = useState<Coords | null>(null);
+    const [hourlyWeather, setHourlyWeather] = useState<HourlyForecast[]>([]);
     
     const [selectedActivityConfig, setSelectedActivityConfig] = useState<{ activity: Activity, autoOpenAudio: boolean } | null>(null);
     
@@ -30,6 +31,31 @@ const App: React.FC = () => {
             );
             return () => navigator.geolocation.clearWatch(id);
         }
+    }, []);
+
+    // Weather Fetching
+    useEffect(() => {
+        fetch('https://api.open-meteo.com/v1/forecast?latitude=60.86&longitude=7.11&hourly=temperature_2m,precipitation_probability,weather_code&timezone=Europe%2FBerlin&forecast_days=1')
+            .then(res => res.json())
+            .then(data => {
+                if (data.hourly) {
+                    const hourly: HourlyForecast[] = [];
+                    // Loop through indices
+                    for(let i = 0; i < data.hourly.time.length; i++) {
+                        const timeStr = data.hourly.time[i]; // "2025-XX-XXT07:00"
+                        const hourStr = timeStr.split('T')[1].split(':')[0]; // "07"
+                        
+                        hourly.push({
+                            time: `${hourStr}:00`,
+                            temp: Math.round(data.hourly.temperature_2m[i]),
+                            precip: data.hourly.precipitation_probability[i],
+                            code: data.hourly.weather_code[i]
+                        });
+                    }
+                    setHourlyWeather(hourly);
+                }
+            })
+            .catch(e => console.log('Timeline Weather offline'));
     }, []);
 
     // Device Orientation (Compass)
@@ -128,7 +154,8 @@ const App: React.FC = () => {
                         onLocate={handleLocate} 
                         userLocation={userLocation} 
                         userHeading={userHeading}
-                        onSelectActivity={handleSelectActivity} 
+                        onSelectActivity={handleSelectActivity}
+                        hourlyWeather={hourlyWeather}
                     />
                 )}
                 {activeTab === 'map' && <MapComponent activities={itinerary} userLocation={userLocation} focusedLocation={mapFocus} />}
