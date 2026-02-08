@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
-import { Map as MapIcon, Globe, Plus, MapPin, X, Save, Trash2 } from 'lucide-react';
+import { Map as MapIcon, Globe, Plus, MapPin, X, Save, Trash2, Search, Loader2 } from 'lucide-react';
 import { Activity, Coords, CustomPOI } from '../types';
 import { GPX_TRACK_DATA } from '../routeData';
 import { parseGPX } from '../utils';
@@ -9,6 +9,13 @@ interface Props {
     activities: Activity[];
     userLocation: Coords | null;
     focusedLocation: Coords | null;
+}
+
+interface SearchResult {
+    place_id: number;
+    lat: string;
+    lon: string;
+    display_name: string;
 }
 
 const LAYERS = {
@@ -27,9 +34,15 @@ const MapComponent: React.FC<Props> = ({ activities, userLocation, focusedLocati
     const mapInstanceRef = useRef<L.Map | null>(null);
     const layersRef = useRef<L.Layer[]>([]);
     const tileLayerRef = useRef<L.TileLayer | null>(null);
+    const searchMarkerRef = useRef<L.Marker | null>(null);
     
     const [mapType, setMapType] = useState<'standard' | 'satellite'>('standard');
     
+    // Search State
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+    const [isSearching, setIsSearching] = useState(false);
+
     // Custom POI State
     const [customPOIs, setCustomPOIs] = useState<CustomPOI[]>([]);
     const [isAddingMode, setIsAddingMode] = useState(false);
@@ -245,10 +258,93 @@ const MapComponent: React.FC<Props> = ({ activities, userLocation, focusedLocati
         }
     }, [focusedLocation]);
 
+    // --- Search Functionality ---
+    const performSearch = async (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
+        if (!searchQuery.trim()) return;
+
+        setIsSearching(true);
+        setSearchResults([]);
+
+        try {
+            // Viewbox covers Gudvangen (West 6.8) to Flåm/Aurland (East 7.3), South 60.7 to North 61.0
+            const viewbox = '6.70,61.00,7.30,60.60'; // left,top,right,bottom
+            const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&viewbox=${viewbox}&bounded=1&limit=5`);
+            const data = await response.json();
+            setSearchResults(data);
+        } catch (error) {
+            console.error("Search failed", error);
+        } finally {
+            setIsSearching(false);
+        }
+    };
+
+    const handleSelectResult = (result: SearchResult) => {
+        const map = mapInstanceRef.current;
+        if (!map) return;
+
+        const lat = parseFloat(result.lat);
+        const lng = parseFloat(result.lon);
+        const name = result.display_name.split(',')[0];
+
+        // Clear previous search marker
+        if (searchMarkerRef.current) {
+            searchMarkerRef.current.remove();
+        }
+
+        // Fly to location
+        map.setView([lat, lng], 16, { animate: true });
+
+        // Add temporary search marker
+        const marker = L.marker([lat, lng], {
+            icon: L.divIcon({
+                className: 'search-pin',
+                html: `<div style="background-color: #ef4444; width: 14px; height: 14px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 6px rgba(0,0,0,0.5);"></div>`,
+                iconSize: [14, 14]
+            })
+        }).addTo(map)
+          .bindPopup(`<b>${name}</b>`)
+          .openPopup();
+
+        searchMarkerRef.current = marker;
+        setSearchResults([]);
+    };
+
     return (
         <div className="w-full h-full relative">
             <div ref={mapContainerRef} className="w-full h-full bg-slate-100" />
             
+            {/* Search Bar */}
+            <div className="absolute top-4 left-4 z-[1000] w-64">
+                <form onSubmit={performSearch} className="relative shadow-lg rounded-xl">
+                    <input 
+                        type="text" 
+                        placeholder="Buscar en Flåm/Gudvangen..." 
+                        className="w-full h-12 pl-10 pr-4 rounded-xl border-none outline-none text-sm font-medium text-slate-700 bg-white/95 backdrop-blur shadow-sm focus:ring-2 focus:ring-fjord-500"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                    <Search className="absolute left-3 top-3.5 text-slate-400" size={18} />
+                    {isSearching && <Loader2 className="absolute right-3 top-3.5 text-fjord-500 animate-spin" size={18} />}
+                </form>
+
+                {/* Search Results Dropdown */}
+                {searchResults.length > 0 && (
+                    <div className="absolute top-14 left-0 w-full bg-white rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2">
+                        {searchResults.map((result) => (
+                            <button 
+                                key={result.place_id}
+                                onClick={() => handleSelectResult(result)}
+                                className="w-full text-left p-3 hover:bg-slate-50 border-b border-slate-100 last:border-0 text-xs text-slate-700 transition-colors"
+                            >
+                                <span className="font-bold block text-sm">{result.display_name.split(',')[0]}</span>
+                                <span className="opacity-70 truncate block">{result.display_name}</span>
+                            </button>
+                        ))}
+                    </div>
+                )}
+            </div>
+
             {/* Add POI Modal Overlay */}
             {pendingSpot && (
                 <div className="absolute inset-0 z-[1100] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
